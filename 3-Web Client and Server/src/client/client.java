@@ -1,6 +1,8 @@
 package client;
 
 import java.awt.event.KeyEvent;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,9 +10,12 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 
 public class client{
@@ -21,14 +26,15 @@ public class client{
 		String url, host, subUrl, httpRequest;
 		InetAddress hostAddress = null;
 		OutputStream dos = null;
-		InputStream dis = null;
+		DataInputStream dis = null;
 		Socket socket = null;
+		byte[] inblock = new byte[1024];
 		while(true){
 			scanner = new Scanner(System.in);
 			System.out.println("please input your url, ctrl+c to exit..");
 			url = scanner.nextLine();
 			
-			Pattern p = Pattern.compile("((http://)?.*?)(/.*?)");
+			Pattern p = Pattern.compile("(http://)?(?<host>www.*?)(?<sbu>/.*?)?");
 			Matcher mt = p.matcher(url);
 			
 			if(!mt.matches()){
@@ -38,8 +44,8 @@ public class client{
 			
 			// generate http request
 			System.out.println("tring to connect " + url + "..");
-			host = mt.group(1);
-			subUrl = mt.group(3); 
+			host = mt.group("host");
+			subUrl = mt.group("sbu"); 
 			httpRequest = generateHttpRequest(host, subUrl);
 			
 			// reslove the host address
@@ -52,7 +58,9 @@ public class client{
 			
 			// use socket to send http request
 			try {
+				System.out.println(hostAddress);
 				socket = new Socket(hostAddress, 80);
+				
 				dos = socket.getOutputStream();
 				dos.write(httpRequest.getBytes());
 			} catch (IOException e) {
@@ -61,7 +69,14 @@ public class client{
 			
 			// receive http respone
 			try {
-				dis = socket.getInputStream();
+				System.out.println(inblock.toString());
+				dis = new DataInputStream( new BufferedInputStream( socket.getInputStream() ));
+				byte[] te = new byte[1];
+				while(dis.read(te) != -1){
+					System.out.println(Arrays.toString(te));
+				}
+				int num_byte_read = dis.read(inblock);
+				System.out.println("read "+ num_byte_read +" bytes" + inblock.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -75,7 +90,7 @@ public class client{
 		String requestColum = "GET "+suburl+" HTTP/1.1\r\n";
 		String agent = "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0\r\n";
 		String host = "Host: "+hostAdd+"\r\n";
-		ret = requestColum + agent + host;
+		ret = requestColum + agent + host + "\r\n";
 		
 		return ret;
 	}
