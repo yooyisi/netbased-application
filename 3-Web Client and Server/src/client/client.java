@@ -4,6 +4,8 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,7 +61,7 @@ public class client{
 			
 			// use socket to send http request
 			try {
-				System.out.println(hostAddress);
+				//System.out.println(hostAddress);
 				socket = new Socket(hostAddress, 80);
 				
 				dos = socket.getOutputStream();
@@ -78,7 +80,7 @@ public class client{
 					//System.out.print(str);
 				}
 				httpResponse = str_builder.toString();
-				System.out.println(httpResponse);
+				//System.out.println(httpResponse);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -91,7 +93,7 @@ public class client{
 	
 	private static String generateHttpRequest(String hostAdd, String suburl){
 		String ret;
-		String requestColum = "GET "+suburl+" HTTP/1.1\r\n";
+		String requestColum = "GET "+suburl+" HTTP/1.0\r\n";
 		String agent = "User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0\r\n";
 		String host = "Host: "+hostAdd+"\r\n";
 		ret = requestColum + agent + host + "\r\n";
@@ -100,19 +102,36 @@ public class client{
 	}
 	
 	private static void processHttpResponse(String response) {
-		Pattern p = Pattern.compile("HTTP/1.1.*?(?<code>\\d+ \\w+)(.*?\\r?\\n?)*Content-Type:(?<type>.*?)/(.*?\\n?)*");
+		Pattern p = Pattern.compile("HTTP/1.(0|1).*?(?<code>\\d+ \\w+)(.*?\\r?\\n?)*"
+				+ "Content-Type:(?<type>.*?)/(.*?\\r?\\n?)*(?<body>\\<.*?\\r?\\n?)");
 		Matcher m = p.matcher(response);
-		if(m.matches()){
+		if(m.find()){
 			String code = m.group("code");
 			String type = m.group("type");
+			String body = m.group("body");
 			System.out.println("############################");
 			System.out.println("code is "+code);
 			System.out.println("############################");
-			System.out.println("body is "+type);
+			System.out.println("type is "+type);
+			System.out.println("############################");
+			System.out.println("body is "+body);
+			saveToFile(type, body);
+			
 		}else{
 			System.out.println("content not found!");
 		}
-		
+	}
+	
+	private static void saveToFile(String type, String body){
+		byte[] file_info = body.getBytes();
+		try {
+			OutputStream f = new FileOutputStream(System.getProperty("user.dir")+"/src/client/download.html");
+			f.write(file_info);
+		} catch (FileNotFoundException e) {
+			System.out.println("file not found");
+		} catch (IOException e) {
+			System.out.println("IO Exception");
+		}
 	}
 	
 	public void keyListner(KeyEvent e){
