@@ -35,6 +35,7 @@ public class client{
 		while(true){
 			scanner = new Scanner(System.in);
 			System.out.println("please input your url, ctrl+c to exit..");
+			
 			url = scanner.nextLine();
 			
 			Pattern p = Pattern.compile("(http://)?(?<host>www.*?)(?<sbu>/.*?)?");
@@ -61,7 +62,6 @@ public class client{
 			
 			// use socket to send http request
 			try {
-				//System.out.println(hostAddress);
 				socket = new Socket(hostAddress, 80);
 				
 				dos = socket.getOutputStream();
@@ -101,9 +101,11 @@ public class client{
 		return ret;
 	}
 	
-	private static void processHttpResponse(String response) {
+	private static void processHttpResponse(String response) {/*
 		Pattern p = Pattern.compile("HTTP/1.(0|1).*?(?<code>\\d+ \\w+)(.*?\\r?\\n?)*"
-				+ "Content-Type:(?<type>.*?)/(.*?\\r?\\n?)*(?<body>\\<.*?\\r?\\n?)");
+				+ "Content-Type: (?<type>.*?)/(.*?\\r?\\n?)*(?<body>\\<(?:.*?\\r\\n)*)", Pattern.DOTALL);  */
+		Pattern p = Pattern.compile("HTTP/1.(0|1).*?(?<code>\\d+ \\w+)(.*?)"
+				+ "Content-Type: (?<type>.*?)/(.*?)(?<body>\\<[\\s\\S]*)", Pattern.DOTALL);
 		Matcher m = p.matcher(response);
 		if(m.find()){
 			String code = m.group("code");
@@ -124,9 +126,15 @@ public class client{
 	
 	private static void saveToFile(String type, String body){
 		byte[] file_info = body.getBytes();
+		//System.out.println(Arrays.toString(file_info));
+		String postfix = null;
+		if(type=="text")	postfix = "html";
+		if(type=="image")	postfix = "jpg";
 		try {
-			OutputStream f = new FileOutputStream(System.getProperty("user.dir")+"/src/client/download.html");
+			OutputStream f = new FileOutputStream(System.getProperty("user.dir")+"/src/client/download."+postfix);
 			f.write(file_info);
+			System.out.println("file was already successfully saved.");
+			f.close();
 		} catch (FileNotFoundException e) {
 			System.out.println("file not found");
 		} catch (IOException e) {
