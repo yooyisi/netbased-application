@@ -23,7 +23,8 @@ public class client{
 	
 	public static void main(String[] args){
 		Scanner scanner;
-		String url, host, subUrl, httpRequest;
+		String url, host, subUrl, httpRequest, httpResponse = null;
+		StringBuilder str_builder = new StringBuilder();
 		InetAddress hostAddress = null;
 		OutputStream dos = null;
 		DataInputStream dis = null;
@@ -67,20 +68,23 @@ public class client{
 				e.printStackTrace();
 			}
 			
-			// receive http respone
+			// receive http respone, store it in httpResponse
 			try {
-				System.out.println(inblock.toString());
 				dis = new DataInputStream( new BufferedInputStream( socket.getInputStream() ));
 				byte[] te = new byte[1];
 				while(dis.read(te) != -1){
-					System.out.println(Arrays.toString(te));
+					String str = new String(te);
+					str_builder.append(str);
+					//System.out.print(str);
 				}
-				int num_byte_read = dis.read(inblock);
-				System.out.println("read "+ num_byte_read +" bytes" + inblock.toString());
+				httpResponse = str_builder.toString();
+				System.out.println(httpResponse);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			
+			// analysis the http response
+			processHttpResponse(httpResponse);
 		}
 	}
 	
@@ -94,6 +98,23 @@ public class client{
 		
 		return ret;
 	}
+	
+	private static void processHttpResponse(String response) {
+		Pattern p = Pattern.compile("HTTP/1.1.*?(?<code>\\d+ \\w+)(.*?\\r?\\n?)*Content-Type:(?<type>.*?)/(.*?\\n?)*");
+		Matcher m = p.matcher(response);
+		if(m.matches()){
+			String code = m.group("code");
+			String type = m.group("type");
+			System.out.println("############################");
+			System.out.println("code is "+code);
+			System.out.println("############################");
+			System.out.println("body is "+type);
+		}else{
+			System.out.println("content not found!");
+		}
+		
+	}
+	
 	public void keyListner(KeyEvent e){
 		if(e.isControlDown() && e.getKeyCode()==KeyEvent.VK_C)
 			System.out.println("ok");
