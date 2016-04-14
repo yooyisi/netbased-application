@@ -1,0 +1,3 @@
+- why the response could be http 1.1 when the request is http 1.0?
+- http 1.1 has chunked transfer function
+- java regex [\\\s\\\S]* to replace everything
