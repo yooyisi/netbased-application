@@ -38,7 +38,7 @@ public class client{
 			
 			url = scanner.nextLine();
 			
-			Pattern p = Pattern.compile("(http://)?(?<host>www.*?)(?<sbu>/.*?)?");
+			Pattern p = Pattern.compile("(https?://)?(?<host>www.*?)(?<sbu>/.*?)?");
 			Matcher mt = p.matcher(url);
 			
 			if(!mt.matches()){
@@ -101,9 +101,7 @@ public class client{
 		return ret;
 	}
 	
-	private static void processHttpResponse(String response) {/*
-		Pattern p = Pattern.compile("HTTP/1.(0|1).*?(?<code>\\d+ \\w+)(.*?\\r?\\n?)*"
-				+ "Content-Type: (?<type>.*?)/(.*?\\r?\\n?)*(?<body>\\<(?:.*?\\r\\n)*)", Pattern.DOTALL);  */
+	private static void processHttpResponse(String response) {
 		Pattern p = Pattern.compile("HTTP/1.(0|1).*?(?<code>\\d+ \\w+)(.*?)"
 				+ "Content-Type: (?<type>.*?)/(.*?)(?<body>\\<[\\s\\S]*)", Pattern.DOTALL);
 		Matcher m = p.matcher(response);
@@ -112,13 +110,14 @@ public class client{
 			String type = m.group("type");
 			String body = m.group("body");
 			System.out.println("############################");
-			System.out.println("code is "+code);
+			System.out.println("response code is "+code);
 			System.out.println("############################");
-			System.out.println("type is "+type);
-			System.out.println("############################");
-			System.out.println("body is "+body);
-			saveToFile(type, body);
-			
+			if(code.contains("200")){
+				System.out.println("type is "+type);
+				System.out.println("############################");
+				System.out.println("body is "+body);
+				saveToFile(type, body);
+			}
 		}else{
 			System.out.println("content not found!");
 		}
@@ -128,8 +127,9 @@ public class client{
 		byte[] file_info = body.getBytes();
 		//System.out.println(Arrays.toString(file_info));
 		String postfix = null;
-		if(type=="text")	postfix = "html";
-		if(type=="image")	postfix = "jpg";
+		System.out.println(type.length()+" length and "+type);
+		if(type.contains("text"))	postfix = "html";
+		if(type.contains("image"))	postfix = "jpg";
 		try {
 			OutputStream f = new FileOutputStream(System.getProperty("user.dir")+"/src/client/download."+postfix);
 			f.write(file_info);
